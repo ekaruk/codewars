@@ -13,7 +13,7 @@ public class Solution {
         double meal_cost = in.nextDouble();
         int tip_percent = in.nextInt();
         int tax_percent = in.nextInt();
-        
+         
         double tip = meal_cost*tip_percent/100;
         double tax = meal_cost*tax_percent/100;
         

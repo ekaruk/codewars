@@ -7,11 +7,13 @@ import org.omg.CORBA.INTERNAL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.awt.Point;
 
 public class Finder {
 
+/*	
 	int optimumLenth;
 	Point start;
 	Point finish;
@@ -147,6 +149,9 @@ public class Finder {
 	public int distanse(Point p, int x, int y) {
 		return Math.abs(p.x-x) + Math.abs(p.y - y);
 	}
+
+
+	
 	
 	public Finder(int[][] t, Point start, Point finish) {
 		
@@ -194,7 +199,7 @@ public class Finder {
 //		System.out.println(this);
 		
 //		this.PrintTable();
-*/
+
 	}
 
 	private int doStep(Point currPoint, Point nextPoint, int currLenth) {
@@ -297,7 +302,7 @@ public class Finder {
 		Point newPoint3 = new Point(nextPoint);
 		newPoint3.translate(-1, 0);
 		doStep(nextPoint, newPoint3, currLenth);
-*/
+
 	}
 	
 	public Comparator<Point> getByDistanseToFinish()
@@ -331,32 +336,238 @@ public class Finder {
 		
 		
 	}
+*/	
 	
-	static List<String> cheapestPath(int[][] t, Point start, Point finish) {
-		Finder field = new Finder(t, start, finish);
-
-		int res = field.doStep(null, start, 0);
-		
-		StringBuilder out = new StringBuilder();
-		for (int[] arr : t) 
-		{for (int arr2 : arr) 
-		  {out.append(arr2);
-		   out.append(",");}
-		   out.append(";");}
-		out.append(";start"+start.x+","+start.y+","+finish.x+","+finish.y+";"+field.getLenth()+";countDoStep:"+field.countDoStep+";res"+res);
-		System.out.println(out.toString());
-		//{System.out.println(Arrays.toString(arr));}
-//		field.PrintTable();
-//		System.out.println(field);
-		
-		return field.getWay();
-	}
-	
+/*	
 	public static void way(int[][] t, Point start, Point finish,String steps) {
 		Finder field = new Finder(t, start, finish);
 		System.out.println(field.calcWay(steps));
 	}
+*/
 
+	HashMap<Point, LinkedList<Way>> points;
+	Point[][] idPoints;
+	int[][] roads;
+	Way[][] waysFromStart;
+	Point start;
+	Point finish;
+
+	// Point is out of field
+	public boolean isOut(int x,int y) {
+		return (x < 0) || (y < 0) || (x > (this.idPoints.length-1)) || (y > (this.idPoints[0].length-1));
+	}
+	
+	public Way getWayToFinish() {
+		return waysFromStart[finish.x][finish.y];
+	}
+	
+	public Point getPoint(int x, int y) {
+		
+		if (isOut(x, y)) {return null;}
+		
+		Point result = idPoints[x][y];
+		if (result==null) {
+			result = new Point(x,y);
+			idPoints[x][y] = result;
+		}
+		return result;
+	}
+	
+	public Way getWay(Point p1, Point p2) {
+		Point pMin = minPoint(p1, p2);
+		Point pMax = maxPoint(p1, p2);
+		
+		Way way = null;
+		if (points.containsKey(pMin))
+		{
+			LinkedList<Way> ways = points.get(pMin);
+			for (Way w: ways) {
+				if (w.point2.equals(pMax)) {
+					way = w;
+					break;
+				}
+			}
+		}
+		return way;
+	}
+	
+	public Point maxPoint(Point p1, Point p2) {
+		Point pMax;
+		if (p1.x < p2.x || (p1.x == p2.x && p1.y < p2.y)) {
+			pMax = p2; 
+		} else {pMax = p1;}
+		return pMax;
+	}
+
+	public Point minPoint(Point p1, Point p2) {
+		Point pMin;
+		if (p1.x < p2.x || (p1.x == p2.x && p1.y < p2.y)) {
+			pMin = p1; 
+		} else {pMin = p2;}
+		return pMin;
+	}
+	
+	
+	public LinkedList<Way> initListRoad(Point point) {
+		LinkedList<Way> ways = new LinkedList<Way>();
+		
+		Point point1 = getPoint(point.x+1,point.y);
+		if (!(point1==null)) {
+			Way way1 = new Way(point,point1,roads[point1.x][point1.y]);
+			ways.add(way1);
+		}
+		Point point2 = getPoint(point.x,point.y+1);
+		if (!(point2==null)) {
+			Way way2 = new Way(point,point2,roads[point2.x][point2.y]);
+			ways.add(way2);
+		}
+
+		Point point3 = getPoint(point.x-1,point.y);
+		if (!(point3==null)) {
+			Way way3 = getWay(point3, point);
+			ways.add(way3);
+		}
+		Point point4 = getPoint(point.x,point.y-1);
+		if (!(point4==null)) {
+			Way way4 = getWay(point4, point);
+			ways.add(way4);
+		}		
+		
+		return ways;
+	}
+	
+	public Finder(int[][] t, Point start0, Point finish0) {
+
+		idPoints = new Point[t.length][t[0].length];
+		waysFromStart = new Way[t.length][t[0].length];
+		points = new HashMap<Point, LinkedList<Way>>();
+		start = start0;
+		finish = finish0;
+		
+		idPoints[start.x][start.y] = start;
+		idPoints[finish.x][finish.y] = finish;
+		roads = t;
+		
+		for (int x = 0; x<t.length; x++) {
+			for (int y = 0; y<t[0].length; y++) {
+					Point point = getPoint(x, y);
+					LinkedList<Way> ways = initListRoad(point);
+					points.put(point, ways);
+			}
+		}
+		
+		initFirstWay();
+		
+		getBestWay();
+		
+	}
+	
+	
+	
+	
+	public Point getNextPoint(Point p1,Point p2) {
+		if (p1.x > p2.x) {return getPoint(p1.x-1, p1.y);}
+		else if (p1.x < p2.x) {return getPoint(p1.x+1, p1.y);}
+		else if (p1.y > p2.y) {return getPoint(p1.x, p1.y-1);}
+		else {return getPoint(p1.x, p1.y+1);}
+	}
+	
+	public void getBestWay() {
+
+		LinkedList<Way> startWays = points.get(start);
+		LinkedList<Way> newWays = new LinkedList<Way>();
+		Way wayToFinis = getWayToFinish();
+		
+		boolean modificated = true;
+		while (modificated) {
+			modificated = false;
+			for (Way way : startWays) {
+				//take all ways of end point of this way
+				Point currEndPoint = way.getEndPoint(start);
+				LinkedList<Way> currWays = points.get(currEndPoint);
+				for (Way pointsWay : currWays) {
+					if ((way.len + pointsWay.len) < wayToFinis.len) {
+						Point endPoint = pointsWay.getEndPoint(currEndPoint);
+						Way oldWay = waysFromStart[endPoint.x][endPoint.y];
+						if (oldWay == null) {
+							Way newWay = new Way(way,pointsWay); 
+							waysFromStart[endPoint.x][endPoint.y] = newWay;
+							newWays.add(newWay);
+							modificated = true;
+						} else if ((way.len+pointsWay.len) < oldWay.len){
+							oldWay.len = way.len+pointsWay.len;
+							oldWay.way1 = way;
+							oldWay.way2 = pointsWay;
+							modificated = true;
+						}
+					}
+				}
+			}
+			for (Way w: newWays) {
+				startWays.add(w);
+			}
+			newWays.clear();
+		}
+		
+		points.put(start,startWays);
+	}
+	
+	public void initFirstWay() {
+		
+		LinkedList<Way> startWays = points.get(start);
+
+		Point currPoint = getNextPoint(start, finish);
+		Way currWay = getWay(start, currPoint);
+		while (!(currPoint.equals(finish))) {
+			Point nextPoint = getNextPoint(currPoint, finish);
+			Way nextWay = getWay(currPoint,nextPoint);
+			Way newWay = new Way(currWay,nextWay);
+			startWays.add(newWay);	
+			
+			currPoint = nextPoint;
+			currWay = newWay;
+		}
+		
+		points.put(start,startWays);
+		
+		for (Way way : startWays) {
+			Point endPoint = (start.equals(way.point1)) ? way.point2 : way.point1;
+			waysFromStart[endPoint.x][endPoint.y] = way;
+		}
+
+	}
+	
+	
+	
+	static List<String> cheapestPath(int[][] t, Point start, Point finish) {
+		Finder field = new Finder(t, start, finish);
+
+		Way finishWay = field.waysFromStart[finish.x][finish.y];
+		
+		ArrayList<String> fin = new ArrayList<String>();
+		
+		fin.add(String.valueOf(finishWay.len));
+		fin.add(finishWay.toString());
+		
+		return finishWay.getWay(start);
+	}
+	
+	public static String getNameOfWay(Point start, Point finish) {
+		String ret = ""; 
+		if (start.x < finish.x) {
+			ret = "down";
+		} else if (start.x > finish.x) {
+			ret = "up";
+		} else if (start.y < finish.y) {
+			ret = "right";
+		} else if (start.y > finish.y) {
+			ret = "left";
+		}
+		
+		ret = ret +"("+finish.x+","+finish.y+")";
+		return ret;
+	}
+	
 	public static void main(String[] args) {
 //		int[][] tollMap = { { 1, 4, 1 }, { 1, 9, 1 }, { 1, 1, 1 } };
 //		Point start = new Point(0, 0), finish = new Point(0, 2);
@@ -366,11 +577,16 @@ public class Finder {
 		int[][] tollMap2 = { { 1, 9, 1 }, { 2, 9, 1 }, { 2, 1, 1 } };
 		Point start2 = new Point(0, 0), finish2 = new Point(0, 2);
 		System.out.println(cheapestPath(tollMap2, start2, finish2));
-		way(tollMap2, start2, finish2,"down, down, right, right, up, up");
-/*		
+/*
+		int[][] tollMap3 = { { 1, 9, 1 }, { 2, 9, 1 }, { 2, 1, 1 } };
+		Point start3 = new Point(0, 2), finish3 = new Point(0, 0);
+		System.out.println(cheapestPath(tollMap3, start3, finish3));
+*/		
+		//way(tollMap2, start2, finish2,"down, down, right, right, up, up");
+		
 		int[][] tollMap3 = { 
 		{50,58,98,44,88,31,33,14,30,58,79,40,28,80,35,9,54,30,78,74,42,37,32,16,93,71,86,56,71,78,61,51,2,86,43,},
-		{19,87,95,18,59,17,25,14,86,98,4 ,93,20,64,8, 34,29,13,57,81,14,32,36,87,31,57,6,21,91,55,95,99,67,84,31,},
+		{19,87,95,18,59,17,25,14,86,98,4 ,93,20,64,8, 34, 29 ,13,57,81,14,32,36,87,31,57,6,21,91,55,95,99,67,84,31,},
 		{68,46,93,17,69,75,89,33,0 ,33,57,72,23,15,22,11,85,67,63,57,29,38,81,57,41,83,40,40,22,9,80,88,27,7,99,},
 		{23,64,77,63,48,54,49,52,62,0 ,93,95,20,92,25,24,80,89,74,50,24,57,88,46,89,75,33,48,54,68,18,46,22,30,83,},
 		{37,4 ,41,76,85,63,2 ,47,69,44,19,23,25,11,58,66,98,8,49,86,24,34,7,94,46,37,53,59,58,58,88,23,3,7,15,}};
@@ -459,8 +675,8 @@ public class Finder {
 		
 		Point start4 = new Point(67, 52), finish4 = new Point(8, 38);
 		System.out.println(cheapestPath(tollMap4, start4, finish4));
-		way(tollMap4, start4, finish4,"up, up, right, up, up, up, up, left, left, left, up, left, up, up, up, up, up, up, up, up, up, up, up, left, left, left, up, up, up, up, up, up, up, left, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, left, left, up, left, left, up, left, left, left, left, up, left, left, up, up, up, up, up, up, up, up, up, up, right, up, right, up, right");
-		way(tollMap4, start4, finish4,"up, up, right, up, up, up, up, left, left, left, up, left, up, up, up, up, up, up, up, up, up, up, up, left, left, left, up, up, up, up, up, up, up, left, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, left, up, up, left, left, left, left, left, left");
+//		way(tollMap4, start4, finish4,"up, up, right, up, up, up, up, left, left, left, up, left, up, up, up, up, up, up, up, up, up, up, up, left, left, left, up, up, up, up, up, up, up, left, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, left, left, up, left, left, up, left, left, left, left, up, left, left, up, up, up, up, up, up, up, up, up, up, right, up, right, up, right");
+//		way(tollMap4, start4, finish4,"up, up, right, up, up, up, up, left, left, left, up, left, up, up, up, up, up, up, up, up, up, up, up, left, left, left, up, up, up, up, up, up, up, left, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, left, up, up, left, left, left, left, left, left");
 //		{;st67,52,8,38;2312{
 /*		
 //		start 1;17
@@ -474,15 +690,104 @@ public class Finder {
 		
 	}
 
+
+	class Way {
+		
+		Point point1;
+		Point point2;
+		int len;
+		
+		Way way1;
+		Way way2; 
+		
+		public Way(Point p1, Point p2, int length) {
+			Point pMin = minPoint(p1, p2);
+			Point pMax = maxPoint(p1, p2);
+			
+			this.point1 = pMin;
+			this.point2 = pMax;
+			this.len = length;
+		}
+		
+		public Way(Way way1, Way way2) {
+			if (way1.point2 == way2.point1) {
+				this.point1 = minPoint(way1.point1, way2.point2);
+				this.point2 = maxPoint(way1.point1, way2.point2);
+			} else if (way1.point2 == way2.point2) {
+				this.point1 = minPoint(way1.point1, way2.point1);
+				this.point2 = maxPoint(way1.point1, way2.point1);
+			} else if (way1.point1 == way2.point1) {
+				this.point1 = minPoint(way1.point2, way2.point2);
+				this.point2 = maxPoint(way1.point2, way2.point2);
+			} else if (way1.point1 == way2.point2) {
+				this.point1 = minPoint(way1.point2, way2.point1);
+				this.point2 = maxPoint(way1.point2, way2.point1);
+			} else {
+				throw new java.lang.RuntimeException("No common point: way1 and way2)");
+				}
+
+			this.len = way1.len + way2.len;
+			
+			this.way1 = way1;
+			this.way2 = way2;
+		}
+		
+		public String toString() {
+			
+			StringBuilder str = new StringBuilder();
+			if (this.way1 == null) {
+			    str.append("("+this.point1.x+","+this.point1.y+")");
+			    str.append(this.len);
+			    str.append("("+this.point2.x+","+this.point2.y+")");
+			} else {
+				str.append(this.way1);
+				str.append(this.way2);
+			}
+			
+			return str.toString();
+		}
+		
+		public Point getEndPoint(Point startPoint) {
+			return (startPoint.equals(this.point1)) ? this.point2 : this.point1;
+		}
+
+		public Way getFirstWay(Point startPoint) {
+			if (this.point1 == startPoint || this.point2 == startPoint) {
+				{return this.way1;} 
+			} else {return this.way2;}
+		}
+		
+		public Way getLastWay(Point startPoint) {
+			if (this.point1 == startPoint || this.point2 == startPoint) {
+				{return this.way2;} 
+			} else {return this.way1;}
+		}
+
+
+		
+		public List<String> getWay(Point startPoint) {
+
+			List<String> ways = new ArrayList<String>();
+			
+			
+			if (this.way1 == null)  {
+				ways.add(getNameOfWay(startPoint, this.getEndPoint(startPoint))+":"+this.len);
+			} else {
+				Way first = getFirstWay(startPoint);
+				Way last = getLastWay(startPoint);
+
+				List<String> insideWays = first.getWay(startPoint);
+				for (String newWay:insideWays) {ways.add(newWay);}
+
+				Point endPoint = first.getEndPoint(startPoint);
+				insideWays = last.getWay(endPoint);
+				for (String newWay:insideWays) {ways.add(newWay);}
+			};
+			
+			return ways;
+		}
+	}
+
+
 }
 
-class Way {
-	
-	Point point1;
-	Point point2;
-	int len;
-	
-	Way way1;
-	Way way2; 
-	
-}

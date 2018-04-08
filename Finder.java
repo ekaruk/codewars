@@ -432,7 +432,7 @@ public class Finder {
 			Way way4 = getWay(point4, point);
 			ways.add(way4);
 		}		
-		
+		 
 		return ways;
 	}
 	

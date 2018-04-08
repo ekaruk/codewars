@@ -1,7 +1,13 @@
 package codewars;
 
 import java.util.List;
+
+import org.omg.CORBA.INTERNAL;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.awt.Point;
 
 public class Finder {
@@ -10,6 +16,8 @@ public class Finder {
 	Point start;
 	Point finish;
 	int[][][] weigth;
+	
+	int countDoStep;
 
 	public int value(Point p) {
 		return weigth[p.x][p.y][0];
@@ -22,15 +30,57 @@ public class Finder {
 	public void setLenth(Point p, int len) {
 		weigth[p.x][p.y][1] = len;
 	}
+
 	
+	//Point to - current point
+	//Point from - best point to start	
 	public void setPoint(Point to, Point from) {
-		weigth[to.x][to.y][2] = from.x;
-		weigth[to.x][to.y][3] = from.y;
+		weigth[to.x][to.y][4] = from.x;
+		weigth[to.x][to.y][5] = from.y;
 	}
 	
+	//Point to - current point
+	//Point from - best point to finish
+	public void setPointToFinish(Point to, Point from) {
+		weigth[to.x][to.y][6] = from.x;
+		weigth[to.x][to.y][7] = from.y;
+	}
+
+	public Point getPointToFinish(Point p) {
+		return new Point(weigth[p.x][p.y][6],weigth[p.x][p.y][7]);
+	}
+	
+//	public boolean hasPointToFinish(Point p) {
+//		return weigth[p.x][p.y][5] < Integer.MAX_VALUE;
+//	}
+	
 	public Point getPoint(Point to) {
-		Point from = new Point(weigth[to.x][to.y][2],weigth[to.x][to.y][3]);
+		Point from = new Point(weigth[to.x][to.y][4],weigth[to.x][to.y][5]);
 		return from;
+	}
+	
+	public int getMaxDistanceToFinish(Point p) {
+		return weigth[p.x][p.y][2];
+	}
+
+	public int getMinDistanceToFinish(Point p) {
+		return weigth[p.x][p.y][3];
+	}
+	
+	public void setMinDistanceToFinish(Point p, int dist) {
+		weigth[p.x][p.y][3] = dist;
+	}
+	
+	
+	public void updateDistanceToFinish() {
+		Point currPoint = finish;
+		int currDistance = 0;
+		while (!(currPoint.equals(start))) {
+			Point prevPoint = getPoint(currPoint);
+			weigth[prevPoint.x][prevPoint.y][2] = currDistance;
+			currDistance = currDistance + value(prevPoint);
+			currPoint = prevPoint;
+		}
 	}
 
 	// Point is out of field
@@ -86,10 +136,6 @@ public class Finder {
 			}
 			curr = prev;	
 		} 
-		
-		
-		
-		
 		return nameWay;
 	}
 
@@ -97,22 +143,29 @@ public class Finder {
 		return getLenth(this.finish);
 	}
 	
+	// distance in steps from any Point to (x,y)
+	public int distanse(Point p, int x, int y) {
+		return Math.abs(p.x-x) + Math.abs(p.y - y);
+	}
+	
 	public Finder(int[][] t, Point start, Point finish) {
 		
-		this.weigth = new int[t.length][t[0].length][4];
+		this.weigth = new int[t.length][t[0].length][8];
 		for (int x = 0; x<t.length; x++) {
 			for (int y = 0; y<t[0].length; y++) {
 				this.weigth[x][y][0] = t[x][y];
-				this.weigth[x][y][1] = Integer.MAX_VALUE;
+				this.weigth[x][y][1] = 100*distanse(start,x,y);
+				this.weigth[x][y][2] = 100*distanse(finish,x,y);
+//				this.weigth[x][y][5] = Integer.MAX_VALUE;
 			}
 		}
-		
-		
+			
 		this.start = start;
 		this.finish = finish;
-		this.optimumLenth = 0;
+		// Set distanse as maximum possible
+		this.optimumLenth = 100*distanse(start, finish.x, finish.y);
 
-		int currLenth = 1000;
+/*		int currLenth = 1000;
 		Point currPoint = new Point(start);
 		while (!(currPoint.equals(finish))) {
 			Point nextPoint = new Point(currPoint);
@@ -141,34 +194,48 @@ public class Finder {
 //		System.out.println(this);
 		
 //		this.PrintTable();
+*/
 	}
 
-	private void doStep(Point currPoint, Point nextPoint, int currLenth) {
-
+	private int doStep(Point currPoint, Point nextPoint, int currLenth) {
+		countDoStep++;
+		
+		
 		if (this.isOut(nextPoint)) {
-			return;
+			return Integer.MAX_VALUE;
 		}
 
+		
+		int minDistanceToFinish = getMinDistanceToFinish(nextPoint);
+		if ((currLenth + minDistanceToFinish) >= this.optimumLenth) {
+			return minDistanceToFinish + value(nextPoint);
+		} 
+//		if (hasPointToFinish(nextPoint)) {
+//			return getDistanceToFinish(nextPoint) + value(nextPoint);
+//		}
+		
 		if (!(currPoint == null)) {
 
-			if (currLenth >= this.optimumLenth) {
-				return;
-			}
+//			if (currLenth >= this.optimumLenth) {
+//				return minDistanceToFinish + value(nextPoint);
+//			}
 
 			currLenth = currLenth + value(nextPoint);
-			if (currLenth >= this.optimumLenth) {
-				return;
-			}
+//			if (currLenth >= this.optimumLenth) {
+//				return Integer.MAX_VALUE;
+//			}
 
 			if (nextPoint.equals(finish)) {
 				if (this.optimumLenth > currLenth) {
 					this.optimumLenth = currLenth;
 					setLenth(nextPoint, currLenth);
 					setPoint(nextPoint, currPoint);
+					updateDistanceToFinish();
+					setPointToFinish(finish, currPoint);
 //					System.out.println(this);
 				}
-				return;
-			} else if (currLenth >= getLenth(nextPoint) ) {return;}
+				return value(nextPoint);
+			} else if (currLenth >= getLenth(nextPoint) ) {return minDistanceToFinish + value(nextPoint);}
 			else {setLenth(nextPoint, currLenth);
 			      setPoint(nextPoint, currPoint);} 
 
@@ -176,6 +243,44 @@ public class Finder {
 
 //		System.out.println("nextPoint:"+nextPoint+":"+currLenth);
 		
+		ArrayList<Point> variants = new ArrayList<Point>();
+		Point newPoint;
+		newPoint = new Point(nextPoint.x,nextPoint.y+1);
+		if (!(isOut(newPoint)) && !(newPoint.equals(currPoint))) {variants.add(newPoint);}
+//		if (!(isOut(newPoint))) {variants.add(newPoint);}
+
+		newPoint = new Point(nextPoint.x,nextPoint.y-1);
+		if (!(isOut(newPoint)) && !(newPoint.equals(currPoint))) {variants.add(newPoint);}
+
+		newPoint = new Point(nextPoint.x+1,nextPoint.y);
+		if (!(isOut(newPoint)) && !(newPoint.equals(currPoint))) {variants.add(newPoint);}
+
+		newPoint = new Point(nextPoint.x-1,nextPoint.y);
+		if (!(isOut(newPoint)) && !(newPoint.equals(currPoint))) {variants.add(newPoint);}
+
+		
+		Collections.sort(variants, getByDistanseToFinish());
+		
+		minDistanceToFinish = Integer.MAX_VALUE;
+		Point minPointToFinish = new Point();
+		for (Point newPoint0 : variants) {
+			int distanceToFinish = doStep(nextPoint, newPoint0, currLenth);
+			if (distanceToFinish < minDistanceToFinish) {
+				minDistanceToFinish = distanceToFinish;
+				minPointToFinish = newPoint0;
+			}
+			setMinDistanceToFinish(newPoint0, distanceToFinish);
+		}
+		
+//		if (minDistanceToFinish < Integer.MAX_VALUE) {
+//			setPointToFinish(nextPoint, minPointToFinish);
+//			setMinDistanceToFinish(nextPoint, minDistanceToFinish + value(nextPoint));
+		
+			return minDistanceToFinish + value(nextPoint);
+//		} else {return Integer.MAX_VALUE;}
+			
+		
+/*		
 		Point newPoint0 = new Point(nextPoint);
 		newPoint0.translate(0, 1);
 		doStep(nextPoint, newPoint0, currLenth);
@@ -192,9 +297,21 @@ public class Finder {
 		Point newPoint3 = new Point(nextPoint);
 		newPoint3.translate(-1, 0);
 		doStep(nextPoint, newPoint3, currLenth);
-
+*/
 	}
 	
+	public Comparator<Point> getByDistanseToFinish()
+	{   
+	 Comparator<Point> comp = new Comparator<Point>(){
+	     @Override
+	     public int compare(Point p1, Point p2)
+	     {
+	         return getMaxDistanceToFinish(p1) - getMaxDistanceToFinish(p2);
+	     }
+
+	    }; 
+	    return comp;
+	} 
 	
 	public String toString()
 	{
@@ -218,7 +335,7 @@ public class Finder {
 	static List<String> cheapestPath(int[][] t, Point start, Point finish) {
 		Finder field = new Finder(t, start, finish);
 
-		field.doStep(null, start, 0);
+		int res = field.doStep(null, start, 0);
 		
 		StringBuilder out = new StringBuilder();
 		for (int[] arr : t) 
@@ -226,8 +343,8 @@ public class Finder {
 		  {out.append(arr2);
 		   out.append(",");}
 		   out.append(";");}
-		out.append(";start"+start.x+","+start.y+","+finish.x+","+finish.y+";"+field.getLenth());
-		System.out.print(out.toString());
+		out.append(";start"+start.x+","+start.y+","+finish.x+","+finish.y+";"+field.getLenth()+";countDoStep:"+field.countDoStep+";res"+res);
+		System.out.println(out.toString());
 		//{System.out.println(Arrays.toString(arr));}
 //		field.PrintTable();
 //		System.out.println(field);
@@ -250,8 +367,8 @@ public class Finder {
 		Point start2 = new Point(0, 0), finish2 = new Point(0, 2);
 		System.out.println(cheapestPath(tollMap2, start2, finish2));
 		way(tollMap2, start2, finish2,"down, down, right, right, up, up");
-		
-/*		int[][] tollMap3 = { 
+/*		
+		int[][] tollMap3 = { 
 		{50,58,98,44,88,31,33,14,30,58,79,40,28,80,35,9,54,30,78,74,42,37,32,16,93,71,86,56,71,78,61,51,2,86,43,},
 		{19,87,95,18,59,17,25,14,86,98,4 ,93,20,64,8, 34,29,13,57,81,14,32,36,87,31,57,6,21,91,55,95,99,67,84,31,},
 		{68,46,93,17,69,75,89,33,0 ,33,57,72,23,15,22,11,85,67,63,57,29,38,81,57,41,83,40,40,22,9,80,88,27,7,99,},
@@ -259,7 +376,7 @@ public class Finder {
 		{37,4 ,41,76,85,63,2 ,47,69,44,19,23,25,11,58,66,98,8,49,86,24,34,7,94,46,37,53,59,58,58,88,23,3,7,15,}};
 		Point start3 = new Point(1, 17), finish3 = new Point(4, 13);
 		System.out.println(cheapestPath(tollMap3, start3, finish3));
-*/
+
 		int[][] tollMap4 = {
 		{14,38,6,4,21,1,4,63,83,37,94,88,18,92,3,70,90,53,74,85,52,47,56,11,33,95,13,10,30,89,83,0,41,84,90,47,20,8,91,85,61,94,68,51,73,15,78,30,27,45,78,35,70,19,6,62,3,12,},
 		{19,62,45,52,68,84,5,71,26,85,74,23,0,13,83,65,31,42,32,99,3,6,40,53,56,2,12,26,35,33,2,62,85,1,5,66,98,36,28,48,28,46,30,62,55,11,16,74,65,69,62,80,43,81,14,52,46,31,},
@@ -345,11 +462,11 @@ public class Finder {
 		way(tollMap4, start4, finish4,"up, up, right, up, up, up, up, left, left, left, up, left, up, up, up, up, up, up, up, up, up, up, up, left, left, left, up, up, up, up, up, up, up, left, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, left, left, up, left, left, up, left, left, left, left, up, left, left, up, up, up, up, up, up, up, up, up, up, right, up, right, up, right");
 		way(tollMap4, start4, finish4,"up, up, right, up, up, up, up, left, left, left, up, left, up, up, up, up, up, up, up, up, up, up, up, left, left, left, up, up, up, up, up, up, up, left, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, up, left, up, up, left, left, left, left, left, left");
 //		{;st67,52,8,38;2312{
-		
+/*		
 //		start 1;17
 //		finish 4;13
 		
-
+*/
 /*		int[][] tollMap2 = { { 1, 19, 1 ,1 ,1}, { 1, 19, 1 ,19,1},{ 1, 19, 1 ,19,1},{ 1, 19, 1 ,19,1}, { 1, 1, 1,19,1 } };
 		Point start2 = new Point(0, 0), finish2 = new Point(4, 4);
 		System.out.println(cheapestPath(tollMap2, start2, finish2));
@@ -357,4 +474,15 @@ public class Finder {
 		
 	}
 
+}
+
+class Way {
+	
+	Point point1;
+	Point point2;
+	int len;
+	
+	Way way1;
+	Way way2; 
+	
 }

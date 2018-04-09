@@ -553,6 +553,48 @@ public class Kata {
         return ret.toString();
     }
     
+    public static int[] countPositivesSumNegatives(int[] input)
+    {
+        int countPozitives = 0;
+        int sumNegatives = 0;
+        
+        for (int i : input) {
+        	if (i>0) {
+        		countPozitives++;
+        	} else {sumNegatives=+i;}
+        }
+        
+    	return new int[]{countPozitives, sumNegatives}; //return an array with count of positives and sum of negatives
+    }
+
+    
+    public static String formatWords(String[] words) {
+    	if (words == null || words.length == 0) {return "";}
+    		
+    	int wordsCount = 0;
+    	for (String word:words) {
+    		if (!word.isEmpty()) {wordsCount++;}
+    	}
+    	
+    	String[] wordsClean = new String[wordsCount];
+    	wordsCount = 0;
+    	for (String word:words) {
+    		if (!word.isEmpty()) {
+        		wordsClean[wordsCount] = word;
+    			wordsCount++;
+    			}
+    	}
+    	
+    	if (wordsCount==1) return wordsClean[0];
+    	
+    	String result = "";
+    	for (int i = 0; i < wordsCount; i++) {
+    		result = result + wordsClean[i] + ((i == (wordsCount-1)) ? "" : (i == (wordsCount-2)) ? " and " : ", ");
+    	}
+ 
+        return result;
+    }
+     
 	public static void main2(String[] args) {
 		// TODO Auto-generated method stub
 		

@@ -245,7 +245,7 @@ public class SkyScrapers7 {
 					for (int y=0; y<7;y++) { 
 						System.out.print(solution[x][y]+((y==6)?"":","));
 						} 
-					System.out.println("}");
+					if (x==6) {System.out.print("}");} else {System.out.println("}");}
 				}
 				System.out.println("}");
 
@@ -256,7 +256,7 @@ public class SkyScrapers7 {
 
 				endtime = System.nanoTime() - StartTime;
 				durationInMs = TimeUnit.NANOSECONDS.toMillis(endtime);
-				System.out.println("GenerateTime:"+durationInMs+"Ms");
+				System.out.println("GenerateTime["+right+"]:"+durationInMs+"Ms");
 				StartTime = System.nanoTime(); 
 				
 				right++;

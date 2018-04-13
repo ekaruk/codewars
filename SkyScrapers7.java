@@ -227,6 +227,10 @@ public class SkyScrapers7 {
 		
 		int right = 0;
 		
+		long StartTime = System.nanoTime(); 
+		long endtime=0;
+		long durationInMs=0;
+		
 		for (int i=1;i<1000;i++) {
 			solution = mixSolution(solution);
 			int[] clues = getClues(solution);
@@ -249,9 +253,18 @@ public class SkyScrapers7 {
 				for (int j = 0;j<28;j++)
 					System.out.print(clues[j]+((j==27)?"":","));
 				System.out.println("}");
+
+				endtime = System.nanoTime() - StartTime;
+				durationInMs = TimeUnit.NANOSECONDS.toMillis(endtime);
+				System.out.println("GenerateTime:"+durationInMs+"Ms");
+				StartTime = System.nanoTime(); 
+				
 				right++;
 		    }
 		}
+		endtime = System.nanoTime() - StartTime;
+		durationInMs = TimeUnit.NANOSECONDS.toMillis(endtime);
+		System.out.println("GenerateTime:"+durationInMs+"Ms");
 		
 /*	    for (int y=0; y<7;y++) { 
 			for (int x=0; x<7;x++) { 

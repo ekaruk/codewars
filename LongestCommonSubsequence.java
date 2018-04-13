@@ -17,17 +17,14 @@ public class LongestCommonSubsequence {
 
 	public String lcs(String x, String y) {
 		
-		x = x.replace('?', 'Ô');
-		y = y.replace('?', 'Ô');
 		long startTime = System.nanoTime();    
 		
 		this.countlcsRec = 0;
 		this.countisMatch = 0;		
 		
-		String res = lcsRec(x,y,"");
+		String res = lcsRec(x,y);
 		
 		long estimatedTime = System.nanoTime() - startTime;		
-
 		
 		System.out.println("countlcsRec:"+this.countlcsRec+";countisMatch"+this.countisMatch+";estimatedTime"+estimatedTime);
 		
@@ -35,7 +32,7 @@ public class LongestCommonSubsequence {
 	}
 	
 	
-	public String lcsRec(String x, String y, String add) {
+	public String lcsRec(String x, String y) {
 
 		this.countlcsRec++;
 		
@@ -48,10 +45,10 @@ public class LongestCommonSubsequence {
 		String result = "";
 		for (int i = 0; i < x.length(); i++) {
 
-				String currRes2 = x.substring(i, i+1);
-				if (isMatch(currRes2, y, add)) {
-					result = currRes2+lcsRec(x.substring(i+1),y,add+currRes2+".*");
-//					System.out.println(result);
+				String currRes = x.substring(i, i+1);
+				int posRes = y.indexOf(currRes);
+				if (posRes >= 0) {
+					result = currRes+lcsRec(x.substring(i+1),y.substring(posRes+1));
 				}
 				if (result.length() > MaxResult.length()) {MaxResult = result;}
 			}
@@ -60,10 +57,10 @@ public class LongestCommonSubsequence {
 
 	}
 
-	public boolean isMatch(String currRes, String y, String add) {
+	public boolean isMatch(String currRes, String y) {
 		this.countisMatch++;
 		
-		currRes = add+changePattern(currRes);
+		currRes = changePattern(currRes);
 		
 		Matcher matcher = Pattern.compile(currRes).matcher(y);
             if (matcher.find()) {
@@ -83,8 +80,8 @@ public class LongestCommonSubsequence {
 		// System.out.println(lcs("bc", "abc")); // TODO Auto-generated method stub
 //		
 		LongestCommonSubsequence lcs = new LongestCommonSubsequence();
-		System.out.println(lcs.lcs("acaf", "abcdef"));
-//		System.out.println(lcs("anothertest","notatest"));
+//		System.out.println(lcs.lcs("acaf", "abcdef"));
+//		System.out.println(lcs.lcs("anothertest","notatest"));
 //		System.out.println(lcs.lcs("O0IF=;N4K6L6H1?J?Q?1SHOS<LIE2CRGK0QR<RL:;","Q:86F8GAK?KENR5GHNS9RMK<L5>3QS2AI0M;CNFA"));
 //		System.out.println(lcs.lcs("L45@7;7H6QR33HJ<II7JG1M3D69IG9GFKGDJCRC?","A:CA25D0RD?3EHJK9R=MPKR=?8N4=28EA120??P?"));
 		System.out.println(lcs.lcs("L8;FJG=P?;2PQ<L>LQ2D:4R@B644N5O99HRH86MNL>GJF?HEL@H9LGSS?SP<;","BQQSE05Q6=<I6B<HHMIR2B<G?O91KDC16SEEI5>>D7FK9@D:JH9NM3P?QP46"));

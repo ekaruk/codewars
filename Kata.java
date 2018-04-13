@@ -3,13 +3,27 @@ package codewars;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javafx.scene.Node;
+
 public class Kata {
 
+	public int loopSize(Node node) {
+		HashMap<Node,Integer> visited = new HashMap<Node,Integer>();
+		int order = 0;
+		while (!(visited.containsKey(node))) {
+			visited.put(node, order);  
+			node = node.getNext();
+			order++;
+		}
+		return order - visited.get(node);
+	  }
+	
 	public static String remove(String str) {
 		  
         return str.substring(1, str.length()-1);

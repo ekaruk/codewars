@@ -226,6 +226,7 @@ public class SkyScrapers7 {
 		}
 		
 		int right = 0;
+		int attempt =0;
 		
 		long StartTime = System.nanoTime(); 
 		long endtime=0;
@@ -237,6 +238,7 @@ public class SkyScrapers7 {
 		    int[][] newSolution = solvePuzzle(clues);
 			
 		    boolean check = checkSolution(solution,newSolution);
+		    attempt++;
 		    if (check) {
 			    System.out.print("solutions["+right+"] = {\n");
 		    	
@@ -245,7 +247,7 @@ public class SkyScrapers7 {
 					for (int y=0; y<7;y++) { 
 						System.out.print(solution[x][y]+((y==6)?"":","));
 						} 
-					if (x==6) {System.out.print("}");} else {System.out.println("}");}
+					if (x==6) {System.out.print("}");} else {System.out.println("},");}
 				}
 				System.out.println("}");
 
@@ -256,9 +258,10 @@ public class SkyScrapers7 {
 
 				endtime = System.nanoTime() - StartTime;
 				durationInMs = TimeUnit.NANOSECONDS.toMillis(endtime);
-				System.out.println("GenerateTime["+right+"]:"+durationInMs+"Ms");
+				System.out.println("//GenerateTime["+right+"]:"+durationInMs+"Ms; attempts:"+attempt);
 				StartTime = System.nanoTime(); 
 				
+				attempt = 0;
 				right++;
 		    }
 		}
@@ -420,7 +423,7 @@ public class SkyScrapers7 {
 		
 		public void addNumber(int i) {
 			this.numbers.add(i);
-			if (this.numbers.size()==1) this.number = i;
+			if (this.numbers.size()==1) {this.number = i;} else {this.number = 0;} ;
 		}
 	}
 
